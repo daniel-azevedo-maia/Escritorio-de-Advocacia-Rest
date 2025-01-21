@@ -17,24 +17,48 @@ class Advogado(models.Model):
     nome = models.CharField(max_length=120)
     numero_oab = models.CharField(max_length=20)
     especialidade = models.CharField(choices=ESPECIALIDADES, max_length=2, blank=False, null=False)
-    email = models.EmailField(default = '')
-    telefone = models.CharField(max_length=100, default = '')
+    email = models.EmailField(default='')
+    telefone = models.CharField(max_length=15, default='')
 
     def __str__(self):
-        return self.nome
-
+        return f"{self.nome} - {self.especialidade}"
 
 class Cliente(models.Model):
-
     nome = models.CharField(max_length=120)
     email = models.EmailField(default='')
-    telefone = models.CharField(max_length=100, default='')
-    rg = models.CharField(max_length=20)
-    cpf = models.CharField(max_length=11)
+    telefone = models.CharField(max_length=15, default='')
+    cpf = models.CharField(max_length=11, unique=True)
     data_nascimento = models.DateField()
     endereco = models.CharField(max_length=250)
 
-    advogado = models.ForeignKey(Advogado, on_delete = models.CASCADE, related_name = 'clientes', null = False, blank = False)
+    advogado = models.ForeignKey(Advogado, on_delete=models.CASCADE, related_name='clientes')
 
     def __str__(self):
         return self.nome
+
+class Processo(models.Model):
+    STATUS_CHOICES = (
+        ('AB', 'Aberto'),
+        ('EM', 'Em andamento'),
+        ('FI', 'Finalizado'),
+    )
+
+    cliente = models.ForeignKey(Cliente, on_delete=models.CASCADE, related_name='processos')
+    advogado = models.ForeignKey(Advogado, on_delete=models.CASCADE, related_name='processos')
+    numero = models.CharField(max_length=30, unique=True)
+    descricao = models.TextField()
+    status = models.CharField(choices=STATUS_CHOICES, max_length=2)
+
+    def __str__(self):
+        return f"Processo {self.numero} - {self.status}"
+
+class Agenda(models.Model):
+    advogado = models.ForeignKey(Advogado, on_delete=models.CASCADE, related_name='agenda')
+    data = models.DateField()
+    horario = models.TimeField()
+    cliente = models.ForeignKey(Cliente, on_delete=models.CASCADE, null=True, blank=True)
+
+    descricao = models.CharField(max_length=255)
+
+    def __str__(self):
+        return f"Agenda {self.data} - {self.horario} ({self.advogado.nome})"
